@@ -11,7 +11,6 @@
         header h1 { margin: 0; font-size: 32px; }
         header p { margin: 8px 0 0; font-size: 15px; color: #a3e4d7; }
         
-        /* دکان کے سٹیٹس بینر کی سٹائلنگ */
         .status-badge { font-size: 18px; font-weight: bold; padding: 12px 20px; margin: 15px auto; border-radius: 8px; display: inline-block; max-width: 500px; border: 2px solid #fff; }
         .open { background-color: #27ae60; color: white; }
         .closed { background-color: #c0392b; color: white; }
@@ -44,14 +43,30 @@
         footer { background-color: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
     </style>
     
-    <script>
-        // دکان کے آن لائن یا آف لائن ہونے کا فنکشن (براؤزر میں محفوظ رہے گا)
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // آپ کا فائر بیس کنفیگریشن ڈیٹا
+        const firebaseConfig = {
+            apiKey: "AIzaSyAelLVg8iGqcqwDCdCQ1BXSpALaCU-3A",
+            authDomain: "lodhran-suq-f730d.firebaseapp.com",
+            projectId: "lodhran-suq-f730d",
+            storageBucket: "lodhran-suq-f730d.firebasestorage.app",
+            messagingSenderId: "586382824363",
+            appId: "1:586382824363:web:17ae67d7b5183954f338ee",
+            measurementId: "G-Q20TVX16RD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         function isShopOpen() {
             return localStorage.getItem("shop_status") !== "closed";
         }
 
         window.onload = function() {
-            // سٹیٹس بينر کو اپڈیٹ کریں
             var statusDiv = document.getElementById("statusBanner");
             if (isShopOpen()) {
                 statusDiv.innerHTML = "✅ دکان کھلی ہے | Shop is Open";
@@ -70,8 +85,7 @@
             }
         };
 
-        // ایڈمن سوئچ فنکشن
-        function toggleShopStatus() {
+        window.toggleShopStatus = function() {
             if (isShopOpen()) {
                 localStorage.setItem("shop_status", "closed");
                 alert("دکان اب آف لائن (بند) کر دی گئی ہے۔");
@@ -80,7 +94,7 @@
                 alert("دکان اب آن لائن (کھلی ہے) کر دی گئی ہے۔");
             }
             location.reload();
-        }
+        };
 
         function checkCustomerHistory(phone) {
             var ordersKey = "orders_count_" + phone;
@@ -98,7 +112,7 @@
             }
         }
 
-        function handleCustomerInput() {
+        window.handleCustomerInput = function() {
             var phone = document.getElementById("custPhone").value.trim();
             var name = document.getElementById("custName").value.trim();
             if (phone.length >= 10) {
@@ -106,9 +120,9 @@
                 localStorage.setItem("lodhran_suq_name", name);
                 checkCustomerHistory(phone);
             }
-        }
+        };
 
-        function processOrder(shopName) {
+        window.processOrder = async function(shopName) {
             if (!isShopOpen()) {
                 alert("معذرت! اس وقت دکان بند ہے، آپ آرڈر نہیں دے سکتے۔");
                 return;
@@ -139,6 +153,21 @@
                 deliveryStatus = "فری ڈلیوری (50 واں آرڈر بونس!)";
             }
 
+            // فائر بیس ڈیٹا بیس میں آرڈر کا ڈیٹا سیو کرنا
+            try {
+                await addDoc(collection(db, "orders"), {
+                    customerName: name,
+                    customerPhone: phone,
+                    area: loc,
+                    shop: shopName,
+                    orderCount: count,
+                    delivery: deliveryStatus,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+
             var text = "سلام! میں لودھراں سوک (" + shopName + ") سے آرڈر دینا چاہتا ہوں۔\n" +
                        "👤 نام: " + name + "\n" +
                        "📱 فون: " + phone + "\n" +
@@ -148,7 +177,7 @@
 
             var url = "https://wa.me/923027442309?text=" + encodeURIComponent(text);
             window.open(url, '_blank');
-        }
+        };
     </script>
 </head>
 <body>
@@ -252,7 +281,7 @@
 
         <div class="about-section">
             <h3>ℹ️ ہمارے بارے میں (About Us) اور رابطہ</h3>
-            <p><strong>لودھراں سوک (Lodhran Suq)</strong> لودھراں شہر کی پہلی ہماری ڈیجیٹل لوکل مارکیٹ ہے جس کا مقصد آپ کا قیمتی وقت بچانا اور گھر کی ہر ضرورت ایک ہی کلک پر آپ کی دہلیز تک پہنچانا ہے۔</p>
+            <p><strong>لودھراں سوک (Lodhran Suq)</strong> لودھراں شہر کی پہلی ڈیجیٹل لوکل مارکیٹ ہے جس کا مقصد آپ کا قیمتی وقت بچانا اور گھر کی ہر ضرورت ایک ہی کلک پر آپ کی دہلیز تک پہنچانا ہے۔</p>
             <div class="contact-info">
                 <p style="margin: 0 0 8px 0;"><strong>📞 رابطہ نمبر (واٹس ایپ):</strong> 03027442309</p>
             </div>
