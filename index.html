@@ -39,7 +39,8 @@
         .btn:hover { background-color: #1ebe57; }
         .btn-blue { background-color: #3498db; }
         .btn-blue:hover { background-color: #2980b9; }
-        .admin-box { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-top: 35px; text-align: center; border-top: 5px solid #e67e22; }
+        .admin-box { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-top: 35px; text-align: center; border-top: 5px solid #e67e22; display: none; }
+        .secret-admin-trigger { text-align: center; margin-top: 25px; font-size: 12px; color: #aaa; cursor: pointer; }
         footer { background-color: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
     </style>
     
@@ -48,7 +49,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // آپ کا فائر بیس کنفیگریشن ڈیٹا
         const firebaseConfig = {
             apiKey: "AIzaSyAelLVg8iGqcqwDCdCQ1BXSpALaCU-3A",
             authDomain: "lodhran-suq-f730d.firebaseapp.com",
@@ -82,6 +82,17 @@
                 document.getElementById("custPhone").value = savedPhone;
                 document.getElementById("custName").value = savedName || "";
                 checkCustomerHistory(savedPhone);
+            }
+        };
+
+        // آپ کا نیا اور محفوظ پاس ورڈ یہاں سیٹ کر دیا گیا ہے
+        window.openAdminPanel = function() {
+            var pass = prompt("ایڈمن پاس ورڈ درج کریں:");
+            if (pass === "1404Khan@009") { 
+                document.getElementById("adminPanelBox").style.display = "block";
+                alert("خوش آمدید! ایڈمن پینل کھول دیا گیا ہے۔");
+            } else if (pass !== null) {
+                alert("غلط پاس ورڈ!");
             }
         };
 
@@ -153,7 +164,6 @@
                 deliveryStatus = "فری ڈلیوری (50 واں آرڈر بونس!)";
             }
 
-            // فائر بیس ڈیٹا بیس میں آرڈر کا ڈیٹا سیو کرنا
             try {
                 await addDoc(collection(db, "orders"), {
                     customerName: name,
@@ -272,11 +282,16 @@
             <button onclick="processOrder('پک اینڈ ڈراپ سروس')" class="btn btn-blue">پک اینڈ ڈراپ کے لیے آرڈر کریں</button>
         </div>
 
-        <!-- ایڈمن کنٹرول سیکشن -->
-        <div class="admin-box">
-            <h3 style="margin-top:0; color: #e67e22;">⚙️ ایڈمن کنٹرول پینل</h3>
+        <!-- خفیہ ایڈمن کنٹرول پینل (جو عام لوگوں کو نظر نہیں آئے گا) -->
+        <div class="admin-box" id="adminPanelBox">
+            <h3 style="margin-top:0; color: #e67e22;">⚙️ ایڈمن کنٹرول پینل (محفوظ)</h3>
             <p style="font-size: 14px; color: #666;">یہ بٹن دکان کا سٹیٹس آن لائن یا آف کرنے کے لیے ہے:</p>
             <button onclick="toggleShopStatus()" class="btn" style="background-color: #e67e22; max-width: 350px; margin: 0 auto;">دکان آن لائن / آف لائن کریں</button>
+        </div>
+
+        <!-- خفیہ لاگ ان بٹن (صرف آپ کو معلوم ہوگا کہ یہ نیچے موجود ہے) -->
+        <div class="secret-admin-trigger" onclick="openAdminPanel()">
+            Admin Login
         </div>
 
         <div class="about-section">
