@@ -6,56 +6,105 @@
     <title>Lodhran Suq - لودھراں سوک</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: right; direction: rtl; color: #333; }
-        header { background-color: #1b4d3e; color: white; padding: 20px; text-align: center; }
-        .status-badge { font-size: 20px; font-weight: bold; padding: 10px; margin-top: 10px; border-radius: 8px; display: inline-block; }
-        .open { background-color: #27ae60; color: white; }
-        .closed { background-color: #c0392b; color: white; }
-        .container { max-width: 1000px; margin: 25px auto; padding: 0 15px; }
-        .btn { display: block; text-align: center; background-color: #25d366; color: white; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 15px; border: none; cursor: pointer; width: 100%; font-size: 16px; }
-        .admin-box { text-align: center; padding: 20px; margin-top: 40px; border-top: 2px solid #ccc; }
-    </style>
-    <script>
-        function getStatus() { return localStorage.getItem("shop_status") !== "closed"; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: right; direction: rtl; unicode-bidi: embed; color: #333; }
+        header { background-color: #1b4d3e; color: white; padding: 20px 20px; text-align: center; }
+        header h1 { margin: 0; font-size: 32px; }
+        header p { margin: 8px 0 0; font-size: 15px; color: #a3e4d7; }
         
+        /* سٹیٹس بینر کی سٹائلنگ */
+        .status-badge { font-size: 18px; font-weight: bold; padding: 15px; margin: 15px auto; border-radius: 8px; display: block; max-width: 400px; }
+        .open { background-color: #27ae60; color: white; border: 2px solid #fff; }
+        .closed { background-color: #c0392b; color: white; border: 2px solid #fff; }
+
+        .city-badge { background-color: #e67e22; color: white; display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; margin-top: 12px; font-weight: bold; }
+        .container { max-width: 1000px; margin: 25px auto; padding: 0 15px; }
+        .customer-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border-right: 5px solid #27ae60; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; text-align: right; }
+        .reward-banner { background: #e8f8f5; border: 1px dashed #27ae60; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #0e6251; font-weight: bold; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .shop-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #27ae60; }
+        .btn { display: block; text-align: center; background-color: #25d366; color: white; padding: 12px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 15px; border: none; cursor: pointer; width: 100%; font-size: 16px; }
+        .admin-box { text-align: center; padding: 20px; margin-top: 40px; background: #eee; border-radius: 10px; }
+        footer { background-color: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
+    </style>
+    
+    <script>
+        // دکان کا اسٹیٹس چیک کرنے کا فنکشن
+        function isShopOpen() { return localStorage.getItem("shop_status") !== "closed"; }
+
         window.onload = function() {
+            // اسٹیٹس بینر اپڈیٹ کریں
             var statusDiv = document.getElementById("statusBanner");
-            if (getStatus()) {
-                statusDiv.innerHTML = "✅ دکان کھلی ہے (Open) | ابھی آرڈر کریں";
+            if (isShopOpen()) {
+                statusDiv.innerHTML = "✅ دکان کھلی ہے | Shop is Open";
                 statusDiv.className = "status-badge open";
             } else {
-                statusDiv.innerHTML = "❌ دکان بند ہے (Closed) | آرڈر نہیں لے سکتے";
+                statusDiv.innerHTML = "❌ دکان بند ہے | Shop is Closed";
                 statusDiv.className = "status-badge closed";
             }
+            // باقی ڈیٹا لوڈ کریں
+            var savedPhone = localStorage.getItem("lodhran_suq_phone");
+            if (savedPhone) { document.getElementById("custPhone").value = savedPhone; }
         };
 
         function toggleShop() {
-            if (getStatus()) { localStorage.setItem("shop_status", "closed"); } 
+            if (isShopOpen()) { localStorage.setItem("shop_status", "closed"); }
             else { localStorage.setItem("shop_status", "open"); }
             location.reload();
         }
 
         function processOrder(shopName) {
-            if (!getStatus()) { alert("معذرت! دکان اس وقت بند ہے۔"); return; }
-            alert("آرڈر واٹس ایپ پر بھیجا جا رہا ہے...");
-            // یہاں اپنا پرانا آرڈر والا لنک کوڈ لگا سکتے ہیں
+            if (!isShopOpen()) {
+                alert("معذرت! اس وقت دکان بند ہے، آپ آرڈر نہیں دے سکتے۔");
+                return;
+            }
+            // آرڈر لاجک
+            var name = document.getElementById("custName").value.trim();
+            var phone = document.getElementById("custPhone").value.trim();
+            if (!name || !phone) { alert("نام اور نمبر درج کریں!"); return; }
+            var text = "آرڈر: " + shopName + "\nنام: " + name + "\nفون: " + phone;
+            window.open("https://wa.me/923027442309?text=" + encodeURIComponent(text), '_blank');
         }
     </script>
 </head>
 <body>
+
     <header>
         <h1>لودھراں سوک (Lodhran Suq)</h1>
+        <!-- یہاں بینر آئے گا -->
         <div id="statusBanner"></div>
+        <p>آپ کی اپنی ڈیجیٹل لوکل مارکیٹ</p>
+        <div class="city-badge">📍 لودھراں شہر اور گردونواح</div>
     </header>
 
     <div class="container">
-        <!-- یہاں اپنے پرانے کارڈز وغیرہ لگا دیں -->
-        <button onclick="processOrder('جنرل سٹور')" class="btn">جنرل سٹور سے آرڈر کریں</button>
-        
+        <!-- کسٹمر فارم -->
+        <div class="customer-box">
+            <h3>👤 کسٹمر کی معلومات</h3>
+            <div class="form-group">
+                <input type="text" id="custName" placeholder="آپ کا نام">
+                <input type="text" id="custPhone" placeholder="موبائل نمبر">
+            </div>
+        </div>
+
+        <!-- کارڈز -->
+        <div class="grid">
+            <div class="shop-card">
+                <h3>🛒 جنرل سٹور</h3>
+                <button onclick="processOrder('جنرل سٹور')" class="btn">آرڈر کریں</button>
+            </div>
+            <!-- باقی کارڈز یہاں اسی طرح رہیں گے -->
+        </div>
+
+        <!-- ایڈمن سوئچ -->
         <div class="admin-box">
-            <p>ایڈمن کنٹرول (صرف آپ کے لیے):</p>
-            <button onclick="toggleShop()" style="padding: 10px 20px; background: #34495e; color: white; border: none; border-radius: 5px;">آن لائن / آف لائن سوئچ کریں</button>
+            <p>ایڈمن کنٹرول:</p>
+            <button onclick="toggleShop()" style="padding: 10px 20px; cursor: pointer;">آن لائن / آف لائن سوئچ کریں</button>
         </div>
     </div>
+
+    <footer><p>&copy; 2026 Lodhran Suq.</p></footer>
 </body>
 </html>
