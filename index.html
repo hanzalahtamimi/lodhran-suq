@@ -7,47 +7,40 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; text-align: right; direction: rtl; unicode-bidi: embed; color: #333; }
-        
         header { background-color: #1b4d3e; color: white; padding: 30px 20px; text-align: center; }
         header h1 { margin: 0; font-size: 32px; }
         header p { margin: 8px 0 0; font-size: 15px; color: #a3e4d7; }
-        
         .city-badge { background-color: #e67e22; color: white; display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 14px; margin-top: 12px; font-weight: bold; }
         .container { max-width: 1000px; margin: 25px auto; padding: 0 15px; }
-
         .customer-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border-right: 5px solid #27ae60; }
         .customer-box h3 { margin-top: 0; color: #1b4d3e; }
         .form-group { margin-bottom: 12px; text-align: right; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; text-align: right; direction: rtl; }
-
         .reward-banner { background: #e8f8f5; border: 1px dashed #27ae60; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; color: #0e6251; font-weight: bold; text-align: center; line-height: 1.6; }
-
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .shop-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #27ae60; display: flex; flex-direction: column; justify-content: space-between; }
         .shop-card h3 { margin-top: 0; color: #1b4d3e; font-size: 20px; }
         .shop-card p { color: #666; font-size: 14px; line-height: 1.6; }
-        
         .pharmacy-card { border-top-color: #e74c3c; }
         .pharmacy-note { font-size: 12px; color: #c0392b; background: #fadbd8; padding: 8px; border-radius: 5px; margin: 10px 0; font-weight: bold; }
-
         .full-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #3498db; margin-top: 20px; }
         .full-card h3 { margin-top: 0; color: #2980b9; font-size: 20px; }
-
         .about-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-top: 35px; border-top: 5px solid #1b4d3e; }
         .about-section h3 { margin-top: 0; color: #1b4d3e; }
         .about-section p { font-size: 14px; color: #555; line-height: 1.8; }
         .contact-info { background: #fdfefe; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-top: 15px; font-size: 14px; }
-
         .btn { display: block; text-align: center; background-color: #25d366; color: white; padding: 12px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 15px; border: none; cursor: pointer; width: 100%; font-size: 16px; font-family: inherit; }
         .btn:hover { background-color: #1ebe57; }
         .btn-blue { background-color: #3498db; }
         .btn-blue:hover { background-color: #2980b9; }
-
         footer { background-color: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: 40px; font-size: 14px; }
     </style>
     
     <script>
+        // --- دکان کا اسٹیٹس (یہاں true سے false کریں) ---
+        const isOnline = true; 
+
         window.onload = function() {
             var savedPhone = localStorage.getItem("lodhran_suq_phone");
             var savedName = localStorage.getItem("lodhran_suq_name");
@@ -57,6 +50,14 @@
                 checkCustomerHistory(savedPhone);
             }
         };
+
+        function checkShopStatus() {
+            if (!isOnline) {
+                alert("معذرت! اس وقت دکان بند ہے، آپ آرڈر نہیں دے سکتے۔");
+                return false;
+            }
+            return true;
+        }
 
         function checkCustomerHistory(phone) {
             var ordersKey = "orders_count_" + phone;
@@ -85,6 +86,8 @@
         }
 
         function processOrder(shopName) {
+            if(!checkShopStatus()) return;
+
             var name = document.getElementById("custName").value.trim();
             var phone = document.getElementById("custPhone").value.trim();
             var loc = document.getElementById("lodhranArea").value;
@@ -131,7 +134,6 @@
     </header>
 
     <div class="container">
-        
         <div class="customer-box">
             <h3>👤 کسٹمر کی معلومات اور ہسٹری</h3>
             <div class="reward-banner" id="welcomeMsg">
@@ -216,22 +218,15 @@
 
         <div class="about-section">
             <h3>ℹ️ ہمارے بارے میں (About Us) اور رابطہ</h3>
-            <p>
-                <strong>لودھراں سوک (Lodhran Suq)</strong> لودھراں شہر کی پہلی جدید ڈیجیٹل لوکل مارکیٹ ہے جس کا مقصد آپ کا قیمتی وقت بچانا اور گھر کی ہر ضرورت (راشن، پھل، سبزیاں، کھانا، ادویات اور پارسل سروس) ایک ہی کلک پر آپ کی دہلیز تک پہنچانا ہے۔ ہم آپ کی سہولت اور امانت داری کے ساتھ خدمات فراہم کرنے کے لیے پرعزم ہیں۔
-            </p>
+            <p><strong>لودھراں سوک (Lodhran Suq)</strong> لودھراں شہر کی پہلی جدید ڈیجیٹل لوکل مارکیٹ ہے جس کا مقصد آپ کا قیمتی وقت بچانا اور گھر کی ہر ضرورت ایک ہی کلک پر آپ کی دہلیز تک پہنچانا ہے۔</p>
             <div class="contact-info">
                 <p style="margin: 0 0 8px 0;"><strong>📞 رابطہ نمبر (واٹس ایپ):</strong> 03027442309</p>
-                <p style="margin: 0;"><strong>✉️ ای میل (برائے شکایات و مشورے):</strong> lodhransuqs@gmail.com</p>
-                <p style="margin: 8px 0 0 0; font-size: 13px; color: #666;">اگر آپ کو ویب سائٹ میں کوئی تبدیلی کروانی ہو، کوئی نئی چیز شامل کرنی ہو یا کوئی بھی تجویز یا شکایت ہو تو آپ ہمیں براہ راست ای میل یا واٹس ایپ پر بتا سکتے ہیں۔</p>
             </div>
         </div>
-
     </div>
 
     <footer>
         <p>&copy; 2026 Lodhran Suq. لودھراں کی اپنی ڈیجیٹل مارکیٹ۔ تمام حقوق محفوظ ہیں۔</p>
-        <p style="font-size: 12px; color: #a6acaf; margin-top: 5px;">سمارٹ کسٹمر ٹریکنگ، بونس سسٹم اور اسکام پروٹیکشن کے ساتھ لیس</p>
     </footer>
-
 </body>
 </html>
