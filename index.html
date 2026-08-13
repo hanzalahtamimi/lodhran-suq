@@ -53,7 +53,7 @@
     <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAelLVg8iGqcqwDCdCQ1BXSpALaCU-3A",
@@ -68,27 +68,47 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        function isShopOpen() {
-            return localStorage.getItem("shop_status") !== "closed";
+        let isCurrentlyOpen = true; // گلوبل ویری ایبل
+
+        // فائر بیس سے دکان کا سٹیٹس اور نوٹس چیک کرنا
+        async function loadAdminSettingsFromFirebase() {
+            try {
+                // شاپ سٹیٹس کے لیے
+                const statusDocRef = doc(db, "settings", "shop_status");
+                const statusSnap = await getDoc(statusDocRef);
+                var statusDiv = document.getElementById("statusBanner");
+
+                if (statusSnap.exists()) {
+                    let data = statusSnap.data();
+                    isCurrentlyOpen = (data.status === "open");
+                } else {
+                    // اگر فائر بیس پر نہ ہو تو ڈیفالٹ اوپن رکھیں
+                    isCurrentlyOpen = true;
+                }
+
+                if (isCurrentlyOpen) {
+                    statusDiv.innerHTML = "✅ دکان کھلی ہے | Shop is Open";
+                    statusDiv.className = "status-badge open";
+                } else {
+                    statusDiv.innerHTML = "❌ دکان بند ہے | Shop is Closed";
+                    statusDiv.className = "status-badge closed";
+                }
+
+                // نوٹس بورڈ کے لیے
+                const noticeDocRef = doc(db, "settings", "notice_board");
+                const noticeSnap = await getDoc(noticeDocRef);
+                if (noticeSnap.exists()) {
+                    let noticeData = noticeSnap.data();
+                    document.getElementById("noticeDisplay").innerText = noticeData.text;
+                    document.getElementById("noticeInputText").value = noticeData.text;
+                }
+            } catch (e) {
+                console.error("Error loading settings: ", e);
+            }
         }
 
         window.onload = function() {
-            var statusDiv = document.getElementById("statusBanner");
-            if (isShopOpen()) {
-                statusDiv.innerHTML = "✅ دکان کھلی ہے | Shop is Open";
-                statusDiv.className = "status-badge open";
-            } else {
-                statusDiv.innerHTML = "❌ دکان بند ہے | Shop is Closed";
-                statusDiv.className = "status-badge closed";
-            }
-
-            // لوکل سٹوریج سے نوٹس لوڈ کرنا
-            var savedNotice = localStorage.getItem("lodhran_suq_notice");
-            if (savedNotice) {
-                document.getElementById("noticeDisplay").innerText = savedNotice;
-                var adminInput = document.getElementById("noticeInputText");
-                if(adminInput) adminInput.value = savedNotice;
-            }
+            loadAdminSettingsFromFirebase();
 
             var savedPhone = localStorage.getItem("lodhran_suq_phone");
             var savedName = localStorage.getItem("lodhran_suq_name");
@@ -110,24 +130,29 @@
             }
         };
 
-        window.toggleShopStatus = function() {
-            if (isShopOpen()) {
-                localStorage.setItem("shop_status", "closed");
-                alert("دکان اب آف لائن (بند) کر دی گئی ہے۔");
-            } else {
-                localStorage.setItem("shop_status", "open");
-                alert("دکان اب آن لائن (کھلی ہے) کر دی گئی ہے۔");
+        // فائر بیس پر دکان کا سٹیٹس آن/آف کرنا (جو سب کے لیے لائیو ہوگا)
+        window.toggleShopStatus = async function() {
+            let newStatus = isCurrentlyOpen ? "closed" : "open";
+            try {
+                await setDoc(doc(db, "settings", "shop_status"), { status: newStatus });
+                alert("دکان کا سٹیٹس کامیابی سے تبدیل کر دیا گیا ہے!");
+                location.reload();
+            } catch (e) {
+                alert("خرابی پیش آئی: " + e.message);
             }
-            location.reload();
         };
 
-        // نیا نوٹس سیভ کرنے کا فنکشن
-        window.updateNoticeBoard = function() {
+        // فائر بیس پر نیا نوٹس سیو کرنا
+        window.updateNoticeBoard = async function() {
             var newText = document.getElementById("noticeInputText").value.trim();
             if (newText !== "") {
-                localStorage.setItem("lodhran_suq_notice", newText);
-                document.getElementById("noticeDisplay").innerText = newText;
-                alert("نوٹس کامیابی سے اپ ڈیٹ کر دیا گیا ہے!");
+                try {
+                    await setDoc(doc(db, "settings", "notice_board"), { text: newText });
+                    document.getElementById("noticeDisplay").innerText = newText;
+                    alert("نوٹس فائر بیس پر کامیابی سے اپ ڈیٹ کر دیا گیا ہے!");
+                } catch (e) {
+                    alert("خرابی پیش آئی: " + e.message);
+                }
             } else {
                 alert("براہ کرم کچھ متن (Text) درج کریں۔");
             }
@@ -160,7 +185,7 @@
         };
 
         window.processOrder = async function(shopName) {
-            if (!isShopOpen()) {
+            if (!isCurrentlyOpen) {
                 alert("معذرت! اس وقت دکان بند ہے، آپ آرڈر نہیں دے سکتے۔");
                 return;
             }
@@ -227,10 +252,10 @@
 
     <div class="container">
 
-        <!-- نوٹس بورڈ سیکشن (جو ویب سائٹ کے اوپر نظر آئے گا) -->
+        <!-- نوٹس بورڈ سیکشن -->
         <div class="notice-board">
             <h3>📢 اہم اعلانات اور آفرز</h3>
-            <p class="notice-text" id="noticeDisplay">آج کی خاص آفر: تمام آرڈرز پر خصوصی ڈسکاؤنٹ اور ہر 50 ویں آرڈر پر فری ڈلیوری!</p>
+            <p class="notice-text" id="noticeDisplay">لوڈ ہو رہا ہے...</p>
         </div>
 
         <div class="customer-box">
@@ -315,20 +340,20 @@
             <button onclick="processOrder('پک اینڈ ڈراپ سروس')" class="btn btn-blue">پک اینڈ ڈراپ کے لیے آرڈر کریں</button>
         </div>
 
-        <!-- خفیہ ایڈمن کنٹرول پینل (پاس ورڈ پروٹیکٹڈ) -->
+        <!-- خفیہ ایڈمن کنٹرول پینل (محفوظ) -->
         <div class="admin-box" id="adminPanelBox">
-            <h3 style="margin-top:0; color: #e67e22;">⚙️ ایڈمن کنٹرول پینل (محفوظ)</h3>
-            <p style="font-size: 14px; color: #666;">یہاں سے آپ دکان کا سٹیٹس اور نوٹس بورڈ تبدیل کر سکتے ہیں:</p>
+            <h3 style="margin-top:0; color: #e67e22;">⚙️ ایڈمن کنٹرول پینل (لائیو فائر بیس کنٹرول)</h3>
+            <p style="font-size: 14px; color: #666;">یہاں سے آپ جو تبدیل کریں گے وہ پوری دنیا میں لائیو ہو جائے گا:</p>
             
             <div style="margin: 15px 0; text-align: right;">
                 <label for="noticeInputText" style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">نوٹس بورڈ کا نیا پیغام لکھیں:</label>
                 <textarea id="noticeInputText" rows="3" placeholder="یہاں نیا اعلان یا ایڈ لکھیں..."></textarea>
-                <button onclick="updateNoticeBoard()" class="btn" style="background-color: #3498db; margin-top: 8px;">نوٹس اپ ڈیٹ کریں</button>
+                <button onclick="updateNoticeBoard()" class="btn" style="background-color: #3498db; margin-top: 8px;">نوٹس فائر بیس پر اپ ڈیٹ کریں</button>
             </div>
 
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-            <button onclick="toggleShopStatus()" class="btn" style="background-color: #e67e22; max-width: 350px; margin: 0 auto;">دکان آن لائن / آف لائن کریں</button>
+            <button onclick="toggleShopStatus()" class="btn" style="background-color: #e67e22; max-width: 350px; margin: 0 auto;">دکان کا سٹیٹس آن / آف کریں (سب کے لیے)</button>
         </div>
 
         <!-- خفیہ لاگ ان بٹن -->
